@@ -1,0 +1,35 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 환경 변수
+.env
+.env.local
+
+# 데이터베이스
+*.sqlite
+*.sqlite3
+*.db
+
+# 로그
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 빌드
+dist/
+build/
+
+# 임시 파일
+tmp/
+temp/
