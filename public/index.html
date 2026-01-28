@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ERP 테스트</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .section { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; }
+        input { margin: 5px; padding: 5px; }
+        button { padding: 5px 15px; cursor: pointer; }
+        .result { margin-top: 10px; padding: 10px; background: #f0f0f0; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>ERP 시스템 테스트</h1>
+    
+    <div class="section">
+        <h2>회원가입</h2>
+        <input type="text" id="username" placeholder="아이디">
+        <input type="password" id="password" placeholder="비밀번호">
+        <input type="email" id="email" placeholder="이메일">
+        <button onclick="register()">가입</button>
+        <div id="registerResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>회사 등록</h2>
+        <input type="text" id="companyName" placeholder="회사 이름">
+        <button onclick="createTenant()">등록</button>
+        <div id="tenantResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>직원 등록</h2>
+        <input type="number" id="tenantId" placeholder="회사 ID">
+        <input type="text" id="empName" placeholder="직원 이름">
+        <input type="text" id="position" placeholder="직급">
+        <button onclick="createEmployee()">등록</button>
+        <div id="employeeResult" class="result"></div>
+    </div>
+    
+    <!-- 파일 업로드 섹션 추가 -->
+    <div class="section">
+        <h2>파일 업로드 (엑셀/이미지)</h2>
+        <input type="file" id="files" multiple accept=".xlsx,.xls,image/*">
+        <button onclick="uploadFiles()">업로드</button>
+        <div id="uploadResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>업로드된 파일 처리</h2>
+        <button onclick="processFiles()">처리 시작</button>
+        <div id="processResult" class="result"></div>
+    </div>
+
+    <!-- 기존 섹션들 아래에 추가 -->
+
+    <div class="section">
+        <h2>회사 템플릿 업로드</h2>
+        <input type="number" id="templateTenantId" placeholder="회사 ID">
+        <input type="text" id="templateName" placeholder="템플릿 이름 (예: 지출결의서)">
+        <input type="file" id="templateFile" accept=".xlsx,.xls">
+        <button onclick="uploadTemplate()">템플릿 등록</button>
+        <div id="templateResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>회사 템플릿 조회</h2>
+        <input type="number" id="viewTenantId" placeholder="회사 ID">
+        <button onclick="viewTemplates()">템플릿 보기</button>
+        <div id="viewTemplateResult" class="result"></div>
+    </div>
+    
+    <script>
+        async function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value;
+            
+            const res = await fetch('/auth/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password, email})
+            });
+            const data = await res.json();
+            document.getElementById('registerResult').innerText = JSON.stringify(data, null, 2);
+        }
+        
+        async function createTenant() {
+            const name = document.getElementById('companyName').value;
+            const res = await fetch('/tenants', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name})
+            });
+            const data = await res.json();
+            document.getElementById('tenantResult').innerText = JSON.stringify(data, null, 2);
+        }
+        
+        async function createEmployee() {
+            const tenant_id = document.getElementById('tenantId').value;
+            const name = document.getElementById('empName').value;
+            const position = document.getElementById('position').value;
+            const res = await fetch('/employees', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({tenant_id, name, position})
+            });
+            const data = await res.json();
+            document.getElementById('employeeResult').innerText = JSON.stringify(data, null, 2);
+        }
+        
+        async function uploadFiles() {
+            const fileInput = document.getElementById('files');
+            
+            if (fileInput.files.length === 0) {
+                alert('파일을 선택하세요!');
+                return;
+            }
+            
+            document.getElementById('uploadResult').innerText = '업로드 중...';
+            
+            const formData = new FormData();
+            
+            for (const file of fileInput.files) {
+                formData.append('files', file);
+            }
+            
+            const res = await fetch('/upload/files', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            document.getElementById('uploadResult').innerText = JSON.stringify(data, null, 2);
+            
+            // ✅ 업로드 후 input 초기화
+            fileInput.value = '';
+        }
+        
+        // 파일 처리
+        async function processFiles() {
+            document.getElementById('processResult').innerText = '처리 중...';
+            
+            const res = await fetch('/upload/process', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await res.json();
+            document.getElementById('processResult').innerText = JSON.stringify(data, null, 2);
+        }
+
+        // 템플릿 업로드
+        async function uploadTemplate() {
+            const tenantId = document.getElementById('templateTenantId').value;
+            const name = document.getElementById('templateName').value;
+            const fileInput = document.getElementById('templateFile');
+            
+            if (!fileInput.files[0]) {
+                alert('파일을 선택하세요!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('tenant_id', tenantId);
+            formData.append('name', name);
+            formData.append('template', fileInput.files[0]);
+            
+            const res = await fetch('/templates', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            document.getElementById('templateResult').innerText = JSON.stringify(data, null, 2);
+            
+            fileInput.value = '';
+        }
+
+        // 템플릿 조회
+        async function viewTemplates() {
+            const tenantId = document.getElementById('viewTenantId').value;
+            
+            const res = await fetch(`/templates/${tenantId}`);
+            const data = await res.json();
+            document.getElementById('viewTemplateResult').innerText = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>

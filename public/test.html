@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ERP 테스트</title>
+</head>
+<body>
+    <h1>회사 등록</h1>
+    <input type="text" id="companyName" placeholder="회사 이름">
+    <button onclick="createTenant()">등록</button>
+    
+    <h1>직원 등록</h1>
+    <input type="number" id="tenantId" placeholder="회사 ID">
+    <input type="text" id="empName" placeholder="직원 이름">
+    <input type="text" id="position" placeholder="직급">
+    <button onclick="createEmployee()">등록</button>
+    
+    <script>
+        async function createTenant() {
+            const name = document.getElementById('companyName').value;
+            const res = await fetch('/tenants', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name})
+            });
+            console.log(await res.json());
+        }
+        
+        async function createEmployee() {
+            const tenant_id = document.getElementById('tenantId').value;
+            const name = document.getElementById('empName').value;
+            const position = document.getElementById('position').value;
+            const res = await fetch('/employees', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({tenant_id, name, position})
+            });
+            console.log(await res.json());
+        }
+    </script>
+</body>
+</html>

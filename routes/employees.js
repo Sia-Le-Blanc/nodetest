@@ -10,7 +10,7 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
     const employees = await Employee.findAll();
-    res.json(employee);
+    res.json(employees);  // employee → employees
 });
 
 module.exports = router;

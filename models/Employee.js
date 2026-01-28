@@ -9,6 +9,10 @@ const Employee = sequelize.define('Employee', {
     position: {
         type: DataTypes.STRING(50),
         allowNull: false
+    },
+    tenant_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     }
 }, {
     tableName: 'companies_employee',

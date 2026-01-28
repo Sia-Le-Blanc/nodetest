@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>엑셀 뷰어</title>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #container { width: 100%; height: 600px; margin-top: 20px; }
+        button { margin: 10px 5px; padding: 10px 20px; cursor: pointer; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1 id="title">엑셀 뷰어</h1>
+    
+    <div class="section">
+        <h3>1단계: 템플릿 불러오기</h3>
+        <label>템플릿 ID: </label>
+        <input type="number" id="templateId" placeholder="템플릿 ID">
+        <button onclick="loadTemplate()">템플릿 불러오기</button>
+    </div>
+    
+    <div class="section">
+        <h3>2단계: 작성한 엑셀 업로드 (자동 채우기)</h3>
+        <input type="file" id="userFile" accept=".xlsx,.xls">
+        <button onclick="autoFill()">자동 채우기</button>
+    </div>
+    
+    <div class="section">
+        <h3>3단계: 확인 및 저장</h3>
+        <button onclick="saveData()">DB에 저장</button>
+    </div>
+    
+    <div id="container"></div>
+    
+    <script>
+        let hot;
+        let currentTemplateId;
+        
+        async function loadTemplate() {
+            const templateId = document.getElementById('templateId').value;
+            currentTemplateId = templateId;
+            
+            const res = await fetch(`/templates/view/${templateId}`);
+            const result = await res.json();
+            
+            document.getElementById('title').innerText = result.templateName;
+            
+            renderExcel(result.data, result.mergeCells);
+        }
+        
+        async function autoFill() {
+            if (!currentTemplateId) {
+                alert('먼저 템플릿을 불러오세요!');
+                return;
+            }
+            
+            const fileInput = document.getElementById('userFile');
+            if (!fileInput.files[0]) {
+                alert('파일을 선택하세요!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('userFile', fileInput.files[0]);
+            
+            const res = await fetch(`/templates/autofill/${currentTemplateId}`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            
+            // 병합 셀 정보 포함해서 렌더링
+            renderExcel(result.data, result.mergeCells);
+            
+            fileInput.value = '';
+            alert('자동 채우기 완료!');
+        }
+
+        function renderExcel(data, mergeCells) {
+            const container = document.getElementById('container');
+            
+            // 기존 Handsontable 인스턴스 제거
+            if (hot) {
+                hot.destroy();
+            }
+            
+            hot = new Handsontable(container, {
+                data: data,
+                colHeaders: true,
+                rowHeaders: true,
+                width: '100%',
+                height: 600,
+                mergeCells: mergeCells,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+        }
+                
+        function saveData() {
+            const data = hot.getData();
+            console.log('저장할 데이터:', data);
+            alert('DB 저장 기능 구현 예정');
+        }
+    </script>
+</body>
+</html>
